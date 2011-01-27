@@ -128,6 +128,33 @@ describe Mongoid::Relations::Referenced::ManyToMany do
     end
   end
 
+  describe "when the relation identity responds to #attributes" do
+    before do
+      String.class_eval do
+        define_method :attributes do
+          "Bad monkey! Bad!"
+        end
+      end
+    end
+    
+    after do
+      String.class_eval do
+        remove_method :attributes
+      end
+    end
+    
+    it "still loads relations properly" do
+      person = Person.create
+      person.lunchpails.create
+      
+      # since the realted models will be in memory
+      # force the relation to query the database
+      person.reload
+      
+      person.lunchpails.first.should be_kind_of(Lunchpail)
+    end
+  end
+
   describe "#=" do
 
     context "when the relation is not polymorphic" do
